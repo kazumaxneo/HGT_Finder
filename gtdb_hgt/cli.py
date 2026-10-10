@@ -18,6 +18,7 @@ from .report import write_report
 from .search import build_db, search, search_self
 from .storage import SpeciesHitStore
 from .sankey import assign_orfs_by_rank, DISPLAY_RANKS, attach_regions, write_sankey, replot_from_run
+from .distribution import plot_from_run as plot_distributions
 
 
 def add_sankey_options(p):
@@ -58,6 +59,10 @@ def add_analysis(p):
     p.add_argument("--sankey", action="store_true", help="Write offline interactive contig taxonomy Sankey plot")
     p.add_argument("--sankey-rank", choices=RANKS[1:-1], default="genus")
     add_sankey_options(p)
+    p.add_argument("--hit-distributions", action="store_true", help="Write species-best distribution pages for all ORFs (may create large outputs)")
+    p.add_argument("--distribution-orf", action="append", help="Generate a distribution only for this ORF; repeat for multiple ORFs")
+    p.add_argument("--distribution-rank", choices=DISPLAY_RANKS, default="genus")
+    p.add_argument("--distribution-max-taxa", type=int, default=12)
 
 
 def add_search(p):
@@ -111,10 +116,23 @@ def parser():
     plot.add_argument("--quality-audit", type=Path,
                       help="Audited top_hit_quality.tsv for an older run without saved quality metrics")
     add_sankey_options(plot)
+    dist = commands.add_parser("distribution", help="Plot individual species-best hits from a saved SQLite store; no search or rescoring")
+    dist.add_argument("--run-dir", required=True, type=Path)
+    dist.add_argument("--out", required=True, type=Path)
+    selection = dist.add_mutually_exclusive_group(required=True)
+    selection.add_argument("--orf-id", action="append", help="ORF ID; repeat to select several")
+    selection.add_argument("--all-orfs", action="store_true", help="Generate separate pages for every ORF")
+    dist.add_argument("--taxonomy", type=Path, help="Original taxonomy TSV for a legacy SQLite store")
+    dist.add_argument("--subject-map", type=Path, help="Subject ID mapping for legacy non-encoded protein IDs")
+    dist.add_argument("--rank", dest="distribution_rank", choices=DISPLAY_RANKS, default="genus")
+    dist.add_argument("--max-taxa", dest="distribution_max_taxa", type=int, default=12)
+    dist.add_argument("--min-hit-quality", type=float, default=.5, help="Quality marking/filter threshold (default .5); all comparison points shown initially")
     return p
 
 
 def validate(a):
+    if hasattr(a, "distribution_max_taxa") and a.distribution_max_taxa < 1:
+        raise ValueError("Distribution display limit must be positive")
     if hasattr(a, "min_hit_quality") and (not math.isfinite(a.min_hit_quality) or not 0 <= a.min_hit_quality <= 1):
         raise ValueError("min-hit-quality must be finite and between 0 and 1")
     if hasattr(a, "threads") and a.threads < 1:
@@ -157,6 +175,10 @@ def analyze(a, folder: Path):
     if not taxa:
         raise ValueError("No reference genomes after filtering")
     genes = read_genes(a.genes)
+    if a.distribution_orf:
+        unknown_orfs = set(a.distribution_orf) - {g["orf_id"] for g in genes}
+        if unknown_orfs:
+            raise ValueError(f"Unknown distribution ORF IDs: {sorted(unknown_orfs)[:5]}")
     selfs = self_scores(a.self_hits)
     subject_map = read_subject_map(a.subject_map)
     search_manifest = a.hits.with_suffix(a.hits.suffix + ".json")
@@ -203,6 +225,14 @@ def analyze(a, folder: Path):
                 "inputs": {"hits": str(a.hits.resolve()), "self_hits": str(a.self_hits.resolve()),
                            "genes": str(a.genes.resolve()), "taxonomy": str(a.taxonomy.resolve()),
                            "taxonomy_sha256": digest(a.taxonomy), "genes_sha256": digest(a.genes)}}
+    if a.subject_map:
+        manifest["inputs"]["subject_map"] = str(a.subject_map.resolve())
+    if a.hit_distributions or a.distribution_orf:
+        dump_json(folder / "run.json", manifest)
+        distribution_result = plot_distributions(folder, folder / "hit_distributions", a.distribution_orf,
+                                                a.distribution_rank, a.distribution_max_taxa, a.min_hit_quality)
+        manifest["hit_distributions"] = {"index": "hit_distributions/index.html",
+                                         "orf_ids": [r["orf_id"] for r in distribution_result["entries"]]}
     if a.sankey:
         manifest["sankey"] = {"rank": a.sankey_rank, "min_species": a.sankey_min_species,
                               "margin": a.sankey_margin, "max_contigs": a.sankey_max_contigs,
@@ -210,6 +240,9 @@ def analyze(a, folder: Path):
                               "method": a.sankey_method,
                               "min_hit_quality": a.min_hit_quality,
                               "interpretation": "taxonomy of strongest filtered hit; close alternatives retained; not HGT probability, GUNC score or contamination fraction"}
+        if "hit_distributions" in manifest:
+            manifest["sankey"].update(distribution_index=manifest["hit_distributions"]["index"],
+                                      distribution_orfs=manifest["hit_distributions"]["orf_ids"])
         rows_by_rank = {rank: attach_regions(values, scored, regions) for rank, values in assignments.items()}
         write_sankey(folder, rows_by_rank[a.sankey_rank], manifest, regions, rows_by_rank)
     dump_json(folder / "run.json", manifest)
@@ -248,6 +281,12 @@ def main(argv=None):
                              min_hit_quality=a.min_hit_quality,
                              quality_audit=a.quality_audit), ensure_ascii=False))
             print("Sankey: " + str((a.out / "sankey.html").resolve()))
+        elif a.command == "distribution":
+            fresh_output(a.out)
+            result = plot_distributions(a.run_dir, a.out, a.orf_id, a.distribution_rank,
+                                        a.distribution_max_taxa, a.min_hit_quality, a.taxonomy, a.subject_map)
+            print(json.dumps({k: result[k] for k in ("orfs", "species_hits", "search_rerun", "hgt_scores_recomputed")}, ensure_ascii=False))
+            print("Distributions: " + str((a.out / "index.html").resolve()))
         elif a.command == "run":
             run_started = time.perf_counter()
             stages = {}

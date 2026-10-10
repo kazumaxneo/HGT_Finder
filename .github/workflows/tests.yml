@@ -27,3 +27,8 @@ jobs:
           node tests/check_sankey.js "$RUNNER_TEMP/hgt-finder-example/sankey.html"
           node tests/check_sankey_rank_controls.js "$RUNNER_TEMP/hgt-finder-example/sankey.html"
           node --check "$RUNNER_TEMP/hgt-finder-example/sankey_script_check.js"
+      - name: Check exact hit distributions and rank controls
+        run: |
+          cp docs/examples/LKSZ1/hit_distributions/orf_000001* "$RUNNER_TEMP/hgt-finder-example/"
+          node tests/check_distribution.js "$RUNNER_TEMP/hgt-finder-example/orf_000001.html"
+          node --check "$RUNNER_TEMP/hgt-finder-example/orf_000001_script_check.js"

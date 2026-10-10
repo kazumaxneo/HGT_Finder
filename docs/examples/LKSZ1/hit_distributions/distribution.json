@@ -1,0 +1,58 @@
+{
+  "created_utc": "2026-10-10T02:36:40.937451+00:00",
+  "config": {
+    "rank": "genus",
+    "max_taxa": 12,
+    "min_hit_quality": 0.5
+  },
+  "orfs": 5,
+  "species_hits": 33388,
+  "entries": [
+    {
+      "orf_id": "LKSZ1_00287",
+      "gene": "nifH",
+      "product": "nitrogenase iron protein",
+      "species_hits": 20692,
+      "quality_known": 0,
+      "page": "orf_000001.html"
+    },
+    {
+      "orf_id": "LKSZ1_00279",
+      "gene": "nifK",
+      "product": "Cyanothece PCC 8801 NifK (nifK)",
+      "species_hits": 870,
+      "quality_known": 0,
+      "page": "orf_000002.html"
+    },
+    {
+      "orf_id": "LKSZ1_00286",
+      "gene": "",
+      "product": "Nitrogenase molybdenum-iron protein alpha chain",
+      "species_hits": 10389,
+      "quality_known": 0,
+      "page": "orf_000003.html"
+    },
+    {
+      "orf_id": "LKSZ1_00194",
+      "gene": "",
+      "product": "hypothetical protein",
+      "species_hits": 424,
+      "quality_known": 0,
+      "page": "orf_000004.html"
+    },
+    {
+      "orf_id": "LKSZ1_00001",
+      "gene": "",
+      "product": "Branched-chain amino acid aminotransferase/4-amino-4-deoxychorismate lyase",
+      "species_hits": 1013,
+      "quality_known": 0,
+      "page": "orf_000005.html"
+    }
+  ],
+  "source_run_sha256": "56241fbbcad2a434c4ef92794b2c553229fb8977ab0dbbdc769e68ee56373573",
+  "source_scores_sha256": "28bb712324aa0b8af0fda05d86711c95a85473c1fd6eacb9bf46a41cc8de5b21",
+  "source_taxonomy_sha256": null,
+  "search_rerun": false,
+  "hgt_scores_recomputed": false,
+  "definition": "One species-best filtered hit per GTDB species; all comparison hits shown by default; quality filtering is optional and display-only"
+}

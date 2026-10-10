@@ -2,6 +2,7 @@
 import html
 import json
 from pathlib import Path
+from urllib.parse import quote
 
 
 def write_report(path: Path, scores, regions, manifest):
@@ -17,8 +18,13 @@ def write_report(path: Path, scores, regions, manifest):
         for f in fields:
             v = r.get(f)
             values.append("NA" if v is None else f"{v:.3f}" if isinstance(v, float) else str(v))
+        cells = [html.escape(v) for v in values]
+        distributions = manifest.get("hit_distributions", {})
+        if r["orf_id"] in distributions.get("orf_ids", []):
+            href = distributions["index"] + "?orf=" + quote(r["orf_id"], safe="")
+            cells[0] = '<a href="' + html.escape(href, quote=True) + '">' + cells[0] + '</a>'
         body.append('<tr data-id="' + html.escape(r["orf_id"], quote=True) + '">' +
-                    ''.join('<td>' + html.escape(v) + '</td>' for v in values) + '</tr>')
+                    ''.join('<td>' + v + '</td>' for v in cells) + '</tr>')
     compact = [{k: r.get(k) for k in ("orf_id", "contig", "start", "end", "gene", "product", "orf_score", "window_score", "flags", "donor_label")} for r in scores]
     # Escape HTML/script terminators in user-provided annotations.
     data = json.dumps(compact, ensure_ascii=False, allow_nan=False).replace("<", "\\u003c").replace("&", "\\u0026")
@@ -29,7 +35,7 @@ def write_report(path: Path, scores, regions, manifest):
     label = html.escape(manifest.get("database_label", "Unspecified reference database"))
     page = '''<!doctype html><html lang="ja"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>HGT_Finder local report</title>
 <style>body{font:14px/1.6 system-ui;margin:0;color:#173140;background:#f7fafc}main{max-width:1450px;margin:auto;padding:24px}h1{margin-bottom:4px}header p{margin-top:0;color:#496573}.notice{padding:14px;background:#fff4db;border-left:4px solid #d39c23;margin:16px 0}.cards{display:flex;gap:18px;flex-wrap:wrap}.cards div{background:white;border:1px solid #d5e1e8;padding:12px 18px;border-radius:8px}.cards b{display:block;font-size:24px}.controls{display:flex;gap:12px;flex-wrap:wrap;margin:16px 0}input,select,button{padding:6px;font:inherit}canvas{display:block;width:100%;height:280px;background:white;border:1px solid #ccd9e1}table{border-collapse:collapse;width:100%;font-size:12px;background:white;color:black}td,th{border:1px solid black;padding:6px;text-align:left}th{position:sticky;top:0;background:white}.scroll{max-height:530px;overflow:auto}a{color:#14628f}.legend{color:#4b6271}#hover{min-height:50px;padding:8px;background:#eef4f7;white-space:pre-wrap}</style>
-<main><header><h1>HGT_Finder · 0.1.0</h1><p>ORFの類似性分布と連続領域の探索</p></header>
+<main><header><h1>HGT_Finder · 0.1.1</h1><p>ORFの類似性分布と連続領域の探索</p></header>
 <div class="notice">スコアはHGT確率ではありません。候補系統は類似配列を持つ参照系統で、歴史的ドナーを確定するものではありません。近縁ヒット未検出は、生物学的な遺伝子の不在を証明しません。</div>
 <p><strong>参照DB：</strong>''' + label + '''</p>
 <div class="cards"><div><b>''' + str(counts["orfs"]) + '''</b>ORF</div><div><b>''' + str(counts["window_eligible_orfs"]) + '''</b>windowに使用できるORF</div><div><b>''' + str(len(regions)) + '''</b>仮の閾値で選んだ候補領域</div></div>
@@ -53,4 +59,8 @@ $('filter').oninput=()=>{const q=$('filter').value.toLowerCase();for(const tr of
     if manifest.get("sankey"):
         page = page.replace("<h2>候補領域</h2>",
                             '<p><a href="sankey.html">Contig → 分類群のサンキープロットを開く</a></p><h2>候補領域</h2>')
+    if manifest.get("hit_distributions"):
+        page = page.replace("<h2>候補領域</h2>", '<p><a href="' +
+                            html.escape(manifest["hit_distributions"]["index"], quote=True) +
+                            '">ORFごとの分類群別ヒット分布を開く（ORF IDからも選択できます）</a></p><h2>候補領域</h2>')
     path.write_text(page)

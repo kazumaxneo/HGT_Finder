@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "HGT_Finder"
-version = "0.1.0"
+version = "0.1.1"
 description = "Taxonomy-aware ORF and region HGT screening with interactive Sankey plots"
 requires-python = ">=3.10"
 dependencies = ["biopython>=1.85"]
@@ -21,4 +21,4 @@ gtdb-hgt = "gtdb_hgt.cli:main"
 include = ["gtdb_hgt*"]
 
 [tool.setuptools.package-data]
-gtdb_hgt = ["sankey.js"]
+gtdb_hgt = ["sankey.js", "distribution.js"]

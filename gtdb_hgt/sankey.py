@@ -389,6 +389,10 @@ def replot_from_run(source, folder, method="best-hit", min_species=2, margin=.01
     for name in ("orf_scores.tsv", "regions.tsv", "report.html"):
         if (source / name).exists():
             shutil.copy2(source / name, folder / name)
+    if manifest.get("hit_distributions", {}).get("index") == "hit_distributions/index.html" and (source / "hit_distributions").is_dir():
+        shutil.copytree(source / "hit_distributions", folder / "hit_distributions")
+        manifest["sankey"].update(distribution_index="hit_distributions/index.html",
+                                  distribution_orfs=manifest["hit_distributions"]["orf_ids"])
     write_sankey(folder, rows, manifest, regions, rows_by_rank)
     dump_json(folder / "run.json", manifest)
     summary = dict(rank_counts={rank: {"status_counts": dict(Counter(r["assignment_status"] for r in values)),
@@ -474,7 +478,7 @@ function setRank(rank){
 function table(){
  const rows=flow?current.filter(r=>graph.contigMap[r.contig]===flow.source&&graph.taxonMap[taxonId(r)]===flow.target):current;
  el('table-count').textContent=rows.length.toLocaleString()+' ORF（一覧は先頭200件。全件はTSVに保存）';
- el('orf-body').innerHTML=rows.slice(0,200).map(r=>'<tr>'+[r.orf_id,r.contig,r.start,r.end,r.gene,r.product,r.taxon_label,r.assignment_status==='assigned'&&r.near_tie?'最高ヒット・別分類群と僅差':r.assignment_status,r.top_hit_pident??'NA',r.top_hit_qcov==null?'NA':r.top_hit_qcov.toFixed(3),r.top_hit_scov==null?'NA':r.top_hit_scov.toFixed(3),r.top_hit_quality==null?'NA':r.top_hit_quality.toFixed(3),r.host_support_species,r.host_best_bitscore??'NA',r.nearby_taxa||'—',r.orf_score===null?'NA':r.orf_score.toFixed(3),r.candidate_regions||'—'].map(v=>'<td>'+esc(v)+'</td>').join('')+'</tr>').join('');
+ el('orf-body').innerHTML=rows.slice(0,200).map(r=>'<tr>'+[r.orf_id,r.contig,r.start,r.end,r.gene,r.product,r.taxon_label,r.assignment_status==='assigned'&&r.near_tie?'最高ヒット・別分類群と僅差':r.assignment_status,r.top_hit_pident??'NA',r.top_hit_qcov==null?'NA':r.top_hit_qcov.toFixed(3),r.top_hit_scov==null?'NA':r.top_hit_scov.toFixed(3),r.top_hit_quality==null?'NA':r.top_hit_quality.toFixed(3),r.host_support_species,r.host_best_bitscore??'NA',r.nearby_taxa||'—',r.orf_score===null?'NA':r.orf_score.toFixed(3),r.candidate_regions||'—'].map((v,i)=>'<td>'+(i===0&&payload.config.distribution_orfs?.includes(r.orf_id)?'<a href="'+esc(payload.config.distribution_index+'?orf='+encodeURIComponent(r.orf_id))+'">'+esc(v)+'</a>':esc(v))+'</td>').join('')+'</tr>').join('');
 }
 function update(){
  const lo=el('from').value===''?1:Number(el('from').value),hi=el('to').value===''?Infinity:Number(el('to').value);

@@ -50,9 +50,17 @@
       "order",
       "family",
       "genus"
+    ],
+    "distribution_index": "hit_distributions/index.html",
+    "distribution_orfs": [
+      "LKSZ1_00287",
+      "LKSZ1_00279",
+      "LKSZ1_00286",
+      "LKSZ1_00194",
+      "LKSZ1_00001"
     ]
   },
-  "version": "0.1.0",
+  "version": "0.1.1",
   "example": "LKSZ1 / GCF_040436315.1",
   "source_analysis_date": "2026-10-09",
   "taxonomy_quality_update_date": "2026-10-10",
@@ -70,5 +78,15 @@
       "regions.tsv": "2dedbf5f657cea49068556e7fa4ae782e512c7b49ce1cf7794d66db385b327d4"
     },
     "interpretation": "Quality threshold applies to taxonomy display only. Original ORF/window scores and candidate regions are retained."
+  },
+  "hit_distributions": {
+    "index": "hit_distributions/index.html",
+    "orf_ids": [
+      "LKSZ1_00287",
+      "LKSZ1_00279",
+      "LKSZ1_00286",
+      "LKSZ1_00194",
+      "LKSZ1_00001"
+    ]
   }
 }

@@ -1,6 +1,6 @@
 # HGT_Finder
 
-**GTDBの分類とDIAMONDのタンパク質ヒットを使い、遺伝子と連続領域のHGT候補を探索するツールです。** ORFごとの類似性スコア、既定で5 ORFの移動平均、候補領域、オフラインで動くレポートとサンキープロットを出力します。初版は **0.1.0** です。
+**GTDBの分類とDIAMONDのタンパク質ヒットを使い、遺伝子と連続領域のHGT候補を探索するツールです。** ORFごとの類似性スコア、既定で5 ORFの移動平均、候補領域、オフラインで動くレポートとサンキープロットを出力します。現在は **0.1.1** です。
 
 近縁の境界を門・綱・目・科・属から指定できます。サンキープロットは一つのHTML内で5階層をボタンで切り替え、contig・座標・候補領域で絞り込めます。
 
@@ -189,6 +189,49 @@ HGT_Finder sankey \
 
 LKSZ1のnif例はcontig_1の291,513–313,504 bp、27 ORFです。公開図でこの座標を指定できます。品質0.5以上25 ORF、低品質1、有効ヒットなし1です。属では13が別属へ割り当てられ、同点5、支持不足7で、宿主属への割り当ては0です。門では品質を満たす25 ORFが宿主と同じCyanobacteriotaにまとまります。同じ門への割り当てはHGTの否定を意味しません。
 
+## ORFごとの分類群別ヒット分布（0.1.1追加）
+
+各ORFのヒットを分類群ごとに並べ、**各GTDB参照種の最良ヒットを1点としてbit scoreの分布を描きます。** 中央値、支持種数、25–75パーセンタイルの箱、最小–最大を表示し、門・綱・目・科・属を切り替えられます。最高値だけが突出する場合と、分類群全体で強い場合を区別できます。
+
+![LKSZ1のnifHの属別ヒット分布。点は参照種の最良ヒット、横線は中央値。](docs/images/LKSZ1_nifH_hit_distribution.svg)
+
+nifH（`LKSZ1_00287`）には20,692参照種の有効ヒットがあります。宿主属Synechocystisは12種、中央値140.5 bit、最大500 bit。JAYKGU01は2種、中央値529.5 bitです。Geitlerinemaの542 bitは1種だけの支持なので、その点も区別して確認できます。
+
+[操作できる分布の例](docs/examples/LKSZ1/hit_distributions/)にはnifH・nifK・nifDと比較用ORF、計5 ORF／33,388参照種を収録しています。ダウンロードして`index.html`を開いてください。公開サンキーとレポートの対象ORF IDからも開けます。古いSQLiteの例では一致率・E-valueが未保存なので、各点の品質は未取得として表示し、推定で補いません。
+
+### 保存済みの解析から生成する
+
+```sh
+HGT_Finder distribution \
+  --run-dir runs/query_genus \
+  --orf-id LKSZ1_00287 \
+  --orf-id LKSZ1_00279 \
+  --out runs/nif_hit_distributions
+```
+
+ORF IDを繰り返して選択できます。全ORFを生成する場合は`--orf-id`の代わりに`--all-orfs`を指定します。ORFごとの個別HTMLを出力し、検索もHGTスコア再計算も行いません。個々の点は中央値だけのTSVから復元できないため、解析時の`species_hits.sqlite`が必要です。
+
+新しいSQLiteにはゲノム番号と分類の対応を保存するので、元の分類TSVを移動しても使えます。0.1.0以前のSQLiteには`--taxonomy /path/to/original/taxonomy.tsv`を渡せます。元の分類表とハッシュを照合します。古い非標準タンパク質IDには`--subject-map`も指定できます。元のDBは読み取り専用で開きます。
+
+### run／analyzeと同時に生成する
+
+`--distribution-orf ORF_ID`を付ければ、指定ORFの分布とレポート／サンキーからのリンクも作成します。複数指定できます。`--hit-distributions`のみを指定すると全ORFを生成します。出力容量はORF数と参照種数に応じて増えるため、必要なORFを選んで生成することもできます。
+
+```sh
+HGT_Finder run \
+  --genbank /path/to/query.gbk \
+  --db /path/to/gtdb_db/proteins.dmnd \
+  --taxonomy /path/to/gtdb_db/taxonomy.tsv \
+  --query-genome GCF_040436315.1 \
+  --threads 32 --sankey \
+  --distribution-orf LKSZ1_00287 \
+  --out runs/query_with_distributions
+```
+
+初期表示は宿主群を含む12分類群で、他群は中央値の高い順です。表示群数は変更でき、非表示の群数・参照種数も明示します。参照種の点を間引く処理は行わず、全分類群のデータはTSVにも保存します。
+
+初期状態は品質が低い点も含む全有効ヒットの分布です。品質下限は0.5で、白抜きの点は下限未満または品質未取得です。「品質下限以上のみ」にチェックすると、未取得も除外し、表示中の点から中央値・支持数を再計算します。この絞り込みは図だけに作用し、元のHGTスコア・候補領域を変えません。SVG保存と全参照種・全5階層の集計TSV出力も利用できます。
+
 ## 出力
 
 | ファイル | 内容 |
@@ -202,6 +245,10 @@ LKSZ1のnif例はcontig_1の291,513–313,504 bp、27 ORFです。公開図で�
 | `sankey.html` | 5階層を切り替えられるオフライン図（`--sankey`） |
 | `sankey_orfs_<rank>.tsv` | 階層ごとの分類・支持・品質情報 |
 | `contig_taxonomy_<rank>.tsv` | 階層ごとのcontig集計 |
+| `hit_distributions/index.html` | 生成したORFの分布ページ一覧 |
+| `hit_distributions/orf_*.html` | 種別点・中央値・支持数と5階層切り替え |
+| `hit_distributions/orf_*_hits.tsv` | 各参照種の最良ヒットと品質指標 |
+| `hit_distributions/orf_*_summary.tsv` | 全5階層の分布集計（品質で絞る前） |
 
 生ヒットはgzip、種単位の集計はSQLiteに保存し、生ヒット全体をRAMへ載せません。`raw_orf_score`は品質条件適用前のスコアです。`top_hit_*`、`donor_top_hit_quality`、`quality_status`に根拠を記録します。
 
@@ -238,8 +285,8 @@ python scripts/benchmark_run.py --expected-genomes 199923 -- \
 python -m unittest discover -s tests -v
 ```
 
-31件のPythonテストで、種単位の重複除去、SQLiteとメモリ集計の一致、近縁範囲、未検出、window境界、品質0.5の境界、監査照合、品質下限変更時の分類復元を確認しています。公開HTMLはNodeで5階層の票数保存、生成されたクリックハンドラー、絞り込み、保存名、JavaScript構文を検証しています。実ブラウザーのレイアウトと操作は未検証です。
+35件のPythonテストで、種単位の重複除去、SQLiteとメモリ集計の一致、近縁範囲、未検出、window境界、品質0.5の境界、監査照合、品質下限変更時の分類復元、種別点の復元、中央値、旧SQLite対応、レポートからのリンクを確認しています。公開HTMLはNodeで5階層の票数保存、分布集計とPythonの一致、生成されたクリックハンドラー、絞り込み、保存名、JavaScript構文を検証しています。実ブラウザーのレイアウトと操作は未検証です。
 
-0.1.0は類似性に基づく候補探索版です。オルソロジー推定、遺伝子樹と種樹の照合、転移方向の推定、GUNCの汚染判定は実装していません。nifH類縁タンパク質やパラログなどは、注釈・遺伝子系統・周辺遺伝子を併せて評価してください。
+0.1.1は類似性に基づく候補探索版です。オルソロジー推定、遺伝子樹と種樹の照合、転移方向の推定、GUNCの汚染判定は実装していません。nifH類縁タンパク質やパラログなどは、注釈・遺伝子系統・周辺遺伝子を併せて評価してください。
 
 参考：[GTDB R232代表ゲノム配布](https://data.gtdb.ecogenomic.org/releases/release232/232.0/genomic_files_reps/)、[DIAMOND公式コマンド説明](https://github.com/bbuchfink/diamond/wiki/3.-Command-line-options)、[WAAFLE](https://github.com/biobakery/waafle)。

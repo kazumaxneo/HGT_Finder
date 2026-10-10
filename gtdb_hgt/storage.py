@@ -1,5 +1,6 @@
 """Disk-backed query/species aggregation for unrestricted GTDB hit output."""
 import sqlite3
+import json
 
 from .io import tax_key
 
@@ -20,6 +21,12 @@ class SpeciesHitStore:
         self.db.execute("PRAGMA journal_mode=WAL")
         self.db.execute("PRAGMA cache_size=-32000")
         self.db.execute("CREATE TABLE hits (q TEXT, species INTEGER, genome INTEGER, subject TEXT, bits REAL, qcov REAL, scov REAL, pident REAL, evalue REAL, PRIMARY KEY(q,species)) WITHOUT ROWID")
+        # Persist the integer-to-lineage mapping for standalone distribution plots.
+        self.db.execute("CREATE TABLE reference_taxonomy (genome INTEGER PRIMARY KEY, accession TEXT NOT NULL, taxonomy TEXT NOT NULL)")
+        self.db.executemany("INSERT INTO reference_taxonomy VALUES (?,?,?)",
+                            ((i, genome, json.dumps(taxa[genome], ensure_ascii=False))
+                             for i, genome in enumerate(self.genomes)))
+        self.db.commit()
         self.pending = []
 
     def put(self, q, species, row):
