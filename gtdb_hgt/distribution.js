@@ -17,9 +17,15 @@ function distributionGroups(points,host,rank,floor=.5,filter=false,maxTaxa=12){
  }
  const all=Array.from(groups.values()).sort((a,b)=>Number(b.host)-Number(a.host)||(b.median??-1)-(a.median??-1)||a.key.localeCompare(b.key));
  const shown=all.slice(0,maxTaxa),labels=new Map();for(const g of all)labels.set(g.label,(labels.get(g.label)||0)+1);
- for(const g of shown)g.displayLabel=labels.get(g.label)>1?g.label+' ['+(g.tax.at(-2)||'分類未確定')+']':g.label;
- return {groups:shown,totalGroups:all.length,total:points.length,accepted:accepted.length,shown:shown.reduce((n,g)=>n+g.n,0),hiddenGroups:all.length-shown.length,maxBits:points.reduce((n,p)=>Math.max(n,p.bitscore),1),floor,filtered:filter};
+ for(const g of all)g.displayLabel=labels.get(g.label)>1?g.label+' ['+(g.tax.at(-2)||'分類未確定')+']':g.label;
+ return {groups:shown,allGroups:all,totalGroups:all.length,total:points.length,accepted:accepted.length,shown:shown.reduce((n,g)=>n+g.n,0),hiddenGroups:all.length-shown.length,maxBits:points.reduce((n,p)=>Math.max(n,p.bitscore),1),floor,filtered:filter};
 }
+function distributionSelect(model,keys,catalog=model){
+ const selected=new Set(keys),available=new Map(model.allGroups.map(g=>[g.key,g]));
+ const groups=catalog.allGroups.filter(g=>selected.has(g.key)).map(g=>available.get(g.key)||{...g,points:[],n:0,min:null,max:null,q1:null,median:null,q3:null,low:0,unknown:0});
+ return {...model,groups,totalGroups:catalog.totalGroups,shown:groups.reduce((n,g)=>n+g.n,0),hiddenGroups:catalog.totalGroups-groups.length};
+}
+function distributionColor(g,i){let hue=(25+i*137.508)%280;if(hue>130)hue+=80;return g.host?'#148c82':`hsl(${hue},65%,42%)`;}
 function distributionHistogram(model,binCount=30){
  if(!Number.isInteger(binCount)||binCount<1||binCount>200)throw Error('Bin count must be an integer from 1 to 200');
  const magnitude=10**Math.floor(Math.log10(model.maxBits));
@@ -31,14 +37,14 @@ function distributionHistogram(model,binCount=30){
  });
  return {...model,groups,binCount,binWidth,upper};
 }
-function distributionSvg(model){
+function distributionPanelsSvg(model){
  const hist=distributionHistogram(model,model.binCount??30),esc=distributionEscape;
  const cols=Math.min(3,hist.groups.length),panelW=400,panelH=270,width=cols*panelW,height=60+Math.ceil(hist.groups.length/cols)*panelH;
  const fmt=v=>v==null?'—':Number(v.toFixed(2)).toString();
  let svg=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" role="img" aria-label="分類群別ヒストグラム：横軸bit score、縦軸GTDB参照種数"><rect width="100%" height="100%" fill="white"/><style>text{font-family:system-ui,sans-serif}</style><text x="20" y="24" font-size="16">Taxon hit histograms · ${hist.binCount} common bins</text><text x="20" y="46" font-size="12">x: bit score / y: reference species count (scale varies by panel)</text>`;
  hist.groups.forEach((g,i)=>{
   const ox=(i%cols)*panelW,oy=60+Math.floor(i/cols)*panelH,left=ox+58,right=ox+380,top=oy+50,bottom=oy+212;
-  const maximum=Math.max(1,...g.counts),y=v=>bottom-v/maximum*(bottom-top),x=v=>left+v/hist.upper*(right-left),color=g.host?'#148c82':'#dd8730';
+  const maximum=Math.max(1,...g.counts),y=v=>bottom-v/maximum*(bottom-top),x=v=>left+v/hist.upper*(right-left),color=distributionColor(g,i);
   svg+=`<text x="${ox+20}" y="${oy+20}" font-size="14" fill="${g.host?'#0b7068':'black'}">${esc(g.displayLabel.length>35?g.displayLabel.slice(0,34)+'…':g.displayLabel)}${g.host?' (host)':''}<title>${esc(g.tax.join(';'))}</title></text><text x="${ox+20}" y="${oy+38}" font-size="12">n=${g.n.toLocaleString()} / median=${fmt(g.median)}${g.n?'':' (no hits)'}</text>`;
   const ticks=[...new Set([0,Math.round(maximum/2),maximum])];
   for(const value of ticks)svg+=`<path d="M ${left} ${y(value)} H ${right}" stroke="#ddd"/><text x="${left-7}" y="${y(value)+4}" text-anchor="end" font-size="11">${value}</text>`;
@@ -52,31 +58,67 @@ function distributionSvg(model){
  });
  return svg+'</svg>';
 }
+function distributionSvg(model){
+ if(model.mode==='panels'&&model.groups.length)return distributionPanelsSvg(model);
+ const hist=distributionHistogram(model,model.binCount??30),esc=distributionEscape;
+ const width=1000,left=85,right=965,top=85,bottom=425;
+ const maximum=hist.groups.reduce((largest,g)=>g.counts.reduce((n,c)=>Math.max(n,c),largest),1),y=v=>bottom-v/maximum*(bottom-top),x=v=>left+v/hist.upper*(right-left);
+ const fmt=v=>Number(v.toFixed(2)).toString(),legendRows=Math.ceil(hist.groups.length/2),height=510+legendRows*26;
+ let svg=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" role="img" aria-label="選択分類群の重ね描きヒストグラム：横軸bit score、縦軸GTDB参照種数"><rect width="100%" height="100%" fill="white"/><style>text{font-family:system-ui,sans-serif}</style><text x="20" y="26" font-size="17">Selected taxon hit histograms · ${hist.binCount} common bins</text><text x="20" y="48" font-size="12">x: bit score / y: reference species count</text>`;
+ const ticks=[...new Set(Array.from({length:6},(_,i)=>Math.round(maximum*i/5)))];
+ for(const value of ticks)svg+=`<path d="M ${left} ${y(value)} H ${right}" stroke="#ddd"/><text x="${left-9}" y="${y(value)+4}" text-anchor="end" font-size="12">${value.toLocaleString()}</text>`;
+ hist.groups.forEach((g,i)=>{
+  const color=distributionColor(g,i);
+  g.counts.forEach((count,j)=>{
+   const low=j*hist.binWidth,high=(j+1)*hist.binWidth;
+   svg+=`<rect data-bin="true" data-count="${count}" x="${x(low)}" y="${y(count)}" width="${(right-left)/hist.binCount}" height="${bottom-y(count)}" fill="${color}" fill-opacity=".14" stroke="${color}" stroke-width="1.3"><title>${esc(g.displayLabel)}; [${fmt(low)}, ${fmt(high)}${j===hist.binCount-1?']':')'} bit; ${count} reference species</title></rect>`;
+  });
+  const lx=30+(i%2)*480,ly=495+Math.floor(i/2)*26;
+  svg+=`<rect x="${lx}" y="${ly-11}" width="17" height="11" fill="${color}"/><text x="${lx+25}" y="${ly}" font-size="13">${esc(g.displayLabel)}${g.host?' (host)':''} · n=${g.n.toLocaleString()}<title>${esc(g.tax.join(';'))}</title></text>`;
+ });
+ svg+=`<path d="M ${left} ${top} V ${bottom} H ${right}" stroke="black" fill="none"/>`;
+ for(let t=0;t<=6;t++){const value=hist.upper*t/6;svg+=`<text x="${x(value)}" y="${bottom+20}" text-anchor="middle" font-size="12">${fmt(value)}</text>`;}
+ svg+=`<text x="${(left+right)/2}" y="${bottom+45}" text-anchor="middle" font-size="14">bit score</text><text x="${left}" y="${top-12}" font-size="13">Reference species count</text>`;
+ if(!hist.groups.length)svg+=`<text x="500" y="250" text-anchor="middle" font-size="16">Select taxa to compare</text>`;
+ return svg+'</svg>';
+}
 function distributionBinsTsv(model){
  const hist=distributionHistogram(model,model.binCount??30);
  const rows=['taxon\tbin_start_bitscore\tbin_end_bitscore\tend_inclusive\tspecies_count'];
  for(const g of hist.groups)g.counts.forEach((n,i)=>rows.push([g.tax.join(';'),i*hist.binWidth,(i+1)*hist.binWidth,i===hist.binCount-1,n].join('\t')));
  return rows.join('\n')+'\n';
 }
-if(typeof module!=='undefined')module.exports={distributionGroups,distributionSvg,distributionHistogram,distributionBinsTsv,distributionQuantile};
+if(typeof module!=='undefined')module.exports={distributionGroups,distributionSelect,distributionSvg,distributionHistogram,distributionBinsTsv,distributionQuantile};
 if(typeof document!=='undefined'){
- const el=id=>document.getElementById(id);let activeRank=payload.config.rank,model=null;
+ const el=id=>document.getElementById(id);let activeRank=payload.config.rank,model=null,catalog=null;
+ const selections=new Map();
  el('annotation').textContent=[payload.gene.gene,payload.gene.product,payload.gene.contig+':'+payload.gene.start+'–'+payload.gene.end].filter(Boolean).join(' · ');
+ function searchTaxa(){const term=el('taxon-search').value.trim().toLowerCase();for(const label of el('taxon-choices').querySelectorAll('label[data-search]'))label.hidden=!label.dataset.search.includes(term);}
  function updateDistribution(){
   const maximum=Number(el('max-taxa').value),floor=Number(el('quality-floor').value),bins=Number(el('bins').value);
   if(!el('max-taxa').value||!el('quality-floor').value||!Number.isInteger(maximum)||maximum<1||!Number.isFinite(floor)||floor<0||floor>1||!Number.isInteger(bins)||bins<1||bins>200){el('stats').textContent='分類群数は1以上の整数、品質下限は0–1、ビン数は1–200の整数を指定してください。';return;}
-  model=distributionGroups(payload.points,payload.host,activeRank,floor,el('quality-filter').checked,maximum);
-  model.binCount=bins;
+  catalog=distributionGroups(payload.points,payload.host,activeRank,floor,false,maximum);
+  if(!selections.has(activeRank))selections.set(activeRank,new Set(catalog.groups.map(g=>g.key)));
+  const selected=selections.get(activeRank),filtered=distributionGroups(payload.points,payload.host,activeRank,floor,el('quality-filter').checked,maximum);
+  model=distributionSelect(filtered,selected,catalog);model.binCount=bins;model.mode=el('plot-mode').value;
   el('diagram').innerHTML=distributionSvg(model);
+  const support=new Map(filtered.allGroups.map(g=>[g.key,g.n]));
+  el('taxon-choices').innerHTML=catalog.allGroups.map((g,i)=>'<label data-search="'+distributionEscape(g.tax.join(';').toLowerCase())+'" title="'+distributionEscape(g.tax.join(';'))+'"><input type="checkbox" data-index="'+i+'" '+(selected.has(g.key)?'checked':'')+'> '+distributionEscape(g.displayLabel)+(g.host?'（宿主）':'')+' · '+(support.get(g.key)||0).toLocaleString()+'種</label>').join('');
+  searchTaxa();
   for(const button of el('rank-controls').querySelectorAll('[data-rank]'))button.setAttribute('aria-pressed',String(button.dataset.rank===activeRank));
-  el('stats').textContent='表示階層：'+distributionRankNames[activeRank]+' ／ 保存済み '+model.total.toLocaleString()+'参照種 ／ フィルター後 '+model.accepted.toLocaleString()+'種 ／ 図中 '+model.shown.toLocaleString()+'種 ／ '+model.groups.length+'/'+model.totalGroups+'分類群（非表示 '+model.hiddenGroups+'群）。宿主分類群を表示に含めます。';
+  el('stats').textContent='表示階層：'+distributionRankNames[activeRank]+' ／ 保存済み '+model.total.toLocaleString()+'参照種 ／ フィルター後 '+model.accepted.toLocaleString()+'種 ／ 図中 '+model.shown.toLocaleString()+'種 ／ 選択 '+model.groups.length+'/'+model.totalGroups+'分類群（非表示 '+model.hiddenGroups+'群）。';
   const unknown=payload.points.filter(p=>p.quality===null).length;
-  el('quality-note').textContent='品質下限 '+floor+'。'+(model.filtered?'品質取得済みで下限以上のヒットから度数・中央値・支持数を再計算しています。':'元の比較に使った全有効ヒットから中央値・支持数を計算しています。低品質のヒットも保持します。')+(unknown?' '+unknown.toLocaleString()+'種は品質未取得です。古いDBの一致率を推定して補っていません。':'');
+  el('quality-note').textContent='品質下限 '+floor+'。'+(model.filtered?'品質取得済みで下限以上のヒットから度数・中央値・支持数を再計算しています。':'元の比較に使った全有効ヒットから度数・中央値・支持数を計算しています。低品質のヒットも保持します。')+(unknown?' '+unknown.toLocaleString()+'種は品質未取得です。古いDBの一致率を推定して補っていません。':'');
   const fmt=v=>v==null?'—':Number(v.toFixed(3)).toString();
   el('summary').innerHTML=model.groups.map(g=>'<tr>'+[g.displayLabel,g.host?'はい':'いいえ',g.n,fmt(g.min),fmt(g.q1),fmt(g.median),fmt(g.q3),fmt(g.max),g.low,g.unknown].map(v=>'<td>'+distributionEscape(v)+'</td>').join('')+'</tr>').join('');
  }
- for(const button of el('rank-controls').querySelectorAll('[data-rank]'))button.onclick=()=>{activeRank=button.dataset.rank;updateDistribution();};
- el('apply').onclick=updateDistribution;el('quality-filter').onchange=updateDistribution;
+ for(const button of el('rank-controls').querySelectorAll('[data-rank]'))button.onclick=()=>{activeRank=button.dataset.rank;el('taxon-search').value='';updateDistribution();};
+ el('taxon-choices').onchange=e=>{if(!catalog||e.target.dataset.index===undefined)return;const g=catalog.allGroups[Number(e.target.dataset.index)];if(!g)return;const selected=selections.get(activeRank);if(e.target.checked)selected.add(g.key);else selected.delete(g.key);updateDistribution();};
+ el('taxon-search').oninput=searchTaxa;
+ el('select-host').onclick=()=>{if(!catalog)return;selections.set(activeRank,new Set(catalog.allGroups.filter(g=>g.host).map(g=>g.key)));updateDistribution();};
+ el('clear-taxa').onclick=()=>{selections.set(activeRank,new Set());updateDistribution();};
+ el('reset-taxa').onclick=()=>{selections.delete(activeRank);updateDistribution();};
+ el('apply').onclick=updateDistribution;el('quality-filter').onchange=updateDistribution;el('plot-mode').onchange=updateDistribution;
  function download(content,type,suffix){if(!model)return;const url=URL.createObjectURL(new Blob([content],{type})),a=document.createElement('a');a.href=url;a.download=payload.gene.orf_id+'_'+activeRank+suffix;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
  el('export').onclick=()=>{if(model)download(distributionSvg(model),'image/svg+xml','_hit_distribution.svg');};
  el('export-bins').onclick=()=>{if(model)download(distributionBinsTsv(model),'text/tab-separated-values','_histogram_bins.tsv');};

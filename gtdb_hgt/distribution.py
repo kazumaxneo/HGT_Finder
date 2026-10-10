@@ -115,17 +115,20 @@ def write_distribution_page(folder, name, gene, points, host, config):
     label = html.escape(gene["orf_id"])
     page = '''<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>HGT_Finder · Hit distribution</title><style>
-body{font:15px/1.6 system-ui;margin:0;background:#f6f8fa;color:#173140}main{max-width:1450px;margin:auto;padding:24px}button,input{font:inherit;padding:5px}button[aria-pressed=true]{font-weight:bold;border:2px solid #173140}.controls{display:flex;gap:12px;flex-wrap:wrap;margin:16px 0}input[type=number]{width:85px}.scroll{overflow:auto;background:white;border:1px solid #ccd7dd}svg{display:block}table{border-collapse:collapse;background:white;color:black;width:100%;font-size:13px}th,td{border:1px solid black;padding:6px;text-align:left}.muted{color:#536c7b}a{color:#146b98}
+body{font:15px/1.6 system-ui;margin:0;background:#f6f8fa;color:#173140}main{max-width:1450px;margin:auto;padding:24px}button,input,select{font:inherit;padding:5px}button[aria-pressed=true]{font-weight:bold;border:2px solid #173140}.controls{display:flex;gap:12px;flex-wrap:wrap;margin:16px 0}input[type=number]{width:85px}.scroll{overflow:auto;background:white;border:1px solid #ccd7dd}svg{display:block;width:100%;height:auto;min-width:700px}.taxa{max-height:240px;overflow:auto;border:1px solid #ccd7dd;background:white;padding:10px;display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:6px}.taxa label[hidden]{display:none}.taxa input{margin-right:4px}table{border-collapse:collapse;background:white;color:black;width:100%;font-size:13px}th,td{border:1px solid black;padding:6px;text-align:left}.muted{color:#536c7b}a{color:#146b98}
 </style></head><body><main><h1>分類群ごとのヒット分布</h1><p>HGT_Finder · ''' + label + '''</p>
 <p id="annotation"></p><p>各GTDB参照種の最良ヒットをbit scoreの区間ごとに数えたヒストグラムです。有意性・coverage・自己除外条件を通過したヒットを使います。HGT確率や転移方向を示す図ではありません。</p>
 <div id="rank-controls" class="controls">''' + buttons + '''</div>
-<div class="controls"><label>表示分類群数 <input id="max-taxa" type="number" min="1" value="''' + str(config["max_taxa"]) + '''"></label>
+<div class="controls"><label>自動選択する分類群数 <input id="max-taxa" type="number" min="1" value="''' + str(config["max_taxa"]) + '''"></label>
+<label>表示形式 <select id="plot-mode"><option value="overlay">選んだ分類群を重ねる</option><option value="panels">分類群ごとに並べる</option></select></label>
 <label>ビン数 <input id="bins" type="number" min="1" max="200" value="30"></label>
 <label><input id="quality-filter" type="checkbox">品質下限以上のみ（未取得も除外）</label>
 <label>品質下限 <input id="quality-floor" type="number" min="0" max="1" step="0.05" value="''' + str(config["min_hit_quality"]) + '''"></label>
 <button id="apply">表示を更新</button><button id="export">SVG保存</button><button id="export-bins">表示中の度数TSV保存</button></div>
+<h2>比較する分類群を選択</h2><p>階級を選び、比較する属・科などにチェックしてください。全分類群から選べます。例えば「宿主のみ」を押してから、比較したい別属を検索して追加できます。</p>
+<div class="controls"><label>分類群を検索 <input id="taxon-search" type="search"></label><button id="select-host">宿主のみ</button><button id="clear-taxa">選択を解除</button><button id="reset-taxa">上位Nを選択</button></div><div id="taxon-choices" class="taxa"></div>
 <p id="stats"></p><p id="quality-note" class="muted"></p><div id="diagram" class="scroll"></div>
-<p class="muted">横軸はbit score、縦軸はGTDB参照種数です。分類群ごとにパネルを並べ、全パネル・全階級で同じ区間幅と横軸範囲を使います。縦軸の範囲はパネルごとに異なります。区間は下端を含み上端を含まず、最終区間のみ上端も含みます。宿主群を先頭に固定し、その他は中央値の高い順で表示します。青緑は宿主群、橙は他群です。棒にカーソルを置くと区間と種数が見えます。絞り込みはこの図だけに作用し、元のHGTスコア・候補領域を変更しません。</p>
+<p class="muted">横軸はbit score、縦軸はGTDB参照種数です。選択した分類群を色分けして同じ座標に重ねます。分類群ごとのパネル表示にも切り替えられます。全分類群・全階級で同じ区間幅と横軸範囲を使います。重ね描きの縦軸は共通、パネル表示の縦軸の範囲はパネルごとに異なります。区間は下端を含み上端を含まず、最終区間のみ上端も含みます。選択リストは宿主群を先頭に固定し、その他は中央値の高い順です。青緑は宿主群、他群は凡例の色で示します。選択内容は階級ごとに保持します。検索は選択リストの表示だけに作用します。棒にカーソルを置くと区間と種数が見えます。絞り込みはこの図だけに作用し、元のHGTスコア・候補領域を変更しません。</p>
 <h2>表示中の分類群</h2><table><thead><tr><th>分類群</th><th>宿主と同じ</th><th>支持種数</th><th>最小</th><th>25%</th><th>中央値</th><th>75%</th><th>最大</th><th>低品質</th><th>品質未取得</th></tr></thead><tbody id="summary"></tbody></table>
 <p><a href="index.html">ORFの選択に戻る</a> · <a href="''' + name + '''_hits.tsv">全参照種のヒットTSV</a> · <a href="''' + name + '''_summary.tsv">全5階層の集計TSV（品質で絞る前）</a></p>
 </main><script>const payload=''' + encoded + ';\n' + Path(__file__).with_name("distribution.js").read_text() + '\n</script></body></html>'
@@ -162,7 +165,7 @@ def plot_from_run(source, folder, orf_ids=None, rank="genus", max_taxa=12, min_h
         raise ValueError("Host taxonomy must be complete through genus for rank switching")
     reader = SavedHitReader(source, manifest, taxonomy, subject_map)
     entries = []
-    config = dict(rank=rank, max_taxa=max_taxa, min_hit_quality=min_hit_quality, plot_type="histogram", bins=30)
+    config = dict(rank=rank, max_taxa=max_taxa, min_hit_quality=min_hit_quality, plot_type="histogram", bins=30, plot_mode="overlay")
     folder.mkdir(parents=True, exist_ok=True)
     try:
         for i, gene in enumerate(genes, 1):
