@@ -1,6 +1,6 @@
 # HGT_Finder
 
-**GTDBの分類とDIAMONDのタンパク質ヒットを使い、遺伝子と連続領域のHGT候補を探索するツールです。** ORFごとの類似性スコア、既定で5 ORFの移動平均、候補領域、オフラインで動くレポートとサンキープロットを出力します。現在は **0.1.3** です。
+**GTDBの分類とDIAMONDのタンパク質ヒットを使い、遺伝子と連続領域のHGT候補を探索するツールです。** ORFごとの類似性スコア、既定で5 ORFの移動平均、候補領域、オフラインで動くレポートとサンキープロットを出力します。現在は **0.1.4** です。
 
 近縁の境界を門・綱・目・科・属から指定できます。サンキープロットは一つのHTML内で5階層をボタンで切り替え、contig・座標・候補領域で絞り込めます。
 
@@ -262,6 +262,38 @@ HGT_Finder run \
 
 生ヒットはgzip、種単位の集計はSQLiteに保存し、生ヒット全体をRAMへ載せません。`raw_orf_score`は品質条件適用前のスコアです。`top_hit_*`、`donor_top_hit_quality`、`quality_status`に根拠を記録します。
 
+## 検索モードと高速化
+
+`run`／`search`の`--sensitivity`でDIAMONDのモードを指定できます。既定値は従来どおり`very-sensitive`です。`faster`、`fast`、`default`、`mid-sensitive`、`sensitive`、`more-sensitive`、`very-sensitive`、`ultra-sensitive`を選べます。`default`はDIAMONDの感度フラグを省略する指定で、HGT_Finderの既定値とは別です。サーバーのDIAMOND 2.1.9で`faster`と`fast`の存在を確認しました。
+
+```sh
+HGT_Finder run \
+  --genbank /path/to/query.gbk \
+  --db /path/to/gtdb_db/proteins.dmnd \
+  --taxonomy /path/to/gtdb_db/taxonomy.tsv \
+  --query-genome GCF_040436315.1 \
+  --sensitivity fast --threads 32 --sankey \
+  --distribution-orf LKSZ1_00287 --out runs/query_fast
+```
+
+高速モードも`--max-target-seqs 0`、E-value、一致率・両coverageの出力、品質下限0.5を維持します。ただし感度モードは探索中のヒットの発見に影響し、検索後の品質フィルターとは別です。強いヒットをすべて保ったまま弱いヒットだけを除く保証はありません。モードはヒットのJSONと`run.json`に記録します。
+
+[公式説明](https://github.com/bbuchfink/diamond/wiki/3.-Command-line-options#sensitivity-modes)では`fast`は主に一致率90%超、DIAMONDの`default`は60%超、`sensitive`は40%超のヒット向けです。これは検索設計の目安で、厳密な一致率の足切りではありません。`ultra-sensitive`は高感度のモードです。`--iterate`は低感度で有意なヒットを見つけたORFを高感度で検索し直さないため、分類群ごとの多数のヒット分布を比較する本ツールには採用していません。
+
+### LKSZ1の小規模パネルでの予備比較
+
+**フルGTDBのベンチマークではありません。** 18ゲノム・86,577タンパク質の既存比較パネル（独自の分類ラベル）にLKSZ1全3,306 ORFを検索しました。DIAMOND 2.2.1、Mac、6スレッド、品質下限0.5、件数上限なし、モードごとに1回の順次実行です。キャッシュは制御していません。DB構築を除き、run全体は自己比較・集計・サンキー出力を含みます。
+
+| モード | 検索時間（秒） | run全体（秒） | 従来の強いヒットが品質下限未満／未検出になったORF | nif範囲のORFスコアが変わった数 |
+|---|---:|---:|---:|---:|
+| faster | 1.322 | 2.692 | 169 / 2,250 | 14 / 27 |
+| fast | 1.668 | 3.495 | 13 / 2,250 | 9 / 27 |
+| default | 2.665 | 4.867 | 1 / 2,250 | 2 / 27 |
+| sensitive | 8.796 | 12.751 | 0 / 2,250 | 0 / 27 |
+| very-sensitive（比較基準） | 9.860 | 13.926 | 0 / 2,250 | 0 / 27 |
+
+「強い」は基準runの最高ヒットが品質0.5以上だったORFです。nif範囲はcontig_1:291513–313504の27 ORFで、スコア差は未評価への変化または数値差（許容誤差1e-9）を数えています。`sensitive`はこのパネルでは強い最高ヒットのタンパク質IDとnif範囲のスコアを保ちましたが、フルGTDBや他ゲノムでの同等性は未検証です。例えば`default`でも、一致率71.4%・品質0.622だったORFのヒットが未検出になりました。高速モードを一律の既定値には変更していません。[比較結果JSON](docs/benchmarks/LKSZ1_search_modes_pilot.json)
+
 ## フルGTDB R232での実測
 
 LKSZ1全3,306 ORF、GTDB R232全199,923代表ゲノム・618,638,921タンパク質、DIAMOND 2.1.9、Threadripper 3990X、32スレッド、very-sensitive、E-value 1e-10、件数上限なし、外付けHDD上での1回の実測です。OSキャッシュは消去していません。
@@ -297,6 +329,6 @@ python -m unittest discover -s tests -v
 
 35件のPythonテストで、種単位の重複除去、SQLiteとメモリ集計の一致、近縁範囲、未検出、window境界、品質0.5の境界、監査照合、品質下限変更時の分類復元、種別点の復元、中央値、旧SQLite対応、レポートからのリンクを確認しています。公開HTMLはNodeで5階層の票数保存、分布集計とPythonの一致、生成されたクリックハンドラー、絞り込み、保存名、JavaScript構文を検証しています。実ブラウザーのレイアウトと操作は未検証です。
 
-0.1.3は類似性に基づく候補探索版です。オルソロジー推定、遺伝子樹と種樹の照合、転移方向の推定、GUNCの汚染判定は実装していません。nifH類縁タンパク質やパラログなどは、注釈・遺伝子系統・周辺遺伝子を併せて評価してください。
+0.1.4は類似性に基づく候補探索版です。オルソロジー推定、遺伝子樹と種樹の照合、転移方向の推定、GUNCの汚染判定は実装していません。nifH類縁タンパク質やパラログなどは、注釈・遺伝子系統・周辺遺伝子を併せて評価してください。
 
 参考：[GTDB R232代表ゲノム配布](https://data.gtdb.ecogenomic.org/releases/release232/232.0/genomic_files_reps/)、[DIAMOND公式コマンド説明](https://github.com/bbuchfink/diamond/wiki/3.-Command-line-options)、[WAAFLE](https://github.com/biobakery/waafle)。

@@ -15,7 +15,7 @@ from .core import collect_hits, score_genes, self_scores, smooth_and_regions
 from .io import (RANKS, canonical_accession, digest, dump_json, lineage, prepare_genbank,
                  read_genes, read_subject_map, read_taxonomy, tsv_write)
 from .report import write_report
-from .search import build_db, search, search_self
+from .search import SENSITIVITY_MODES, build_db, search, search_self
 from .storage import SpeciesHitStore
 from .sankey import assign_orfs_by_rank, DISPLAY_RANKS, attach_regions, write_sankey, replot_from_run
 from .distribution import plot_from_run as plot_distributions
@@ -68,7 +68,8 @@ def add_analysis(p):
 def add_search(p):
     p.add_argument("--diamond", default="diamond")
     p.add_argument("--threads", type=int, default=4)
-    p.add_argument("--sensitivity", choices=("sensitive", "very-sensitive", "ultra-sensitive"), default="very-sensitive")
+    p.add_argument("--sensitivity", choices=SENSITIVITY_MODES, default="very-sensitive",
+                   help="DIAMOND search mode; faster/fast favor close matches, default omits mode flags; current default very-sensitive retained pending benchmarks")
     p.add_argument("--max-target-seqs", type=int, default=0, help="0 = no target count cap (default); significance filters still apply")
 
 

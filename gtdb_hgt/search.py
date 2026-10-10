@@ -16,6 +16,10 @@ from . import __version__
 from .io import BLAST_COLUMNS, canonical_accession, dump_json, open_text, read_taxonomy, write_taxonomy
 
 
+SENSITIVITY_MODES = ("faster", "fast", "default", "mid-sensitive", "sensitive",
+                     "more-sensitive", "very-sensitive", "ultra-sensitive")
+
+
 def execute(cmd: list[str], logfile: Path):
     logfile.parent.mkdir(parents=True, exist_ok=True)
     with logfile.open("a") as f:
@@ -105,12 +109,17 @@ def build_db(proteins: Path, taxonomy: Path, out: Path, diamond: str, threads: i
 
 def search(query: Path, db: Path, out: Path, diamond: str, threads: int,
            evalue=1e-10, max_target_seqs=0, sensitivity="very-sensitive"):
+    if sensitivity not in SENSITIVITY_MODES:
+        raise ValueError(f"Unknown DIAMOND sensitivity: {sensitivity}")
     if out.exists():
         raise ValueError(f"Search output already exists: {out}")
     out.parent.mkdir(parents=True, exist_ok=True)
     cmd = [diamond, "blastp", "--query", str(query), "--db", str(db), "--out", str(out),
            "--threads", str(threads), "--evalue", str(evalue), "--max-target-seqs", str(max_target_seqs),
-           "--" + sensitivity, "--outfmt", "6", *BLAST_COLUMNS]
+           "--outfmt", "6", *BLAST_COLUMNS]
+    # DIAMOND default sensitivity is selected by omitting all sensitivity flags.
+    if sensitivity != "default":
+        cmd += ["--" + sensitivity]
     if out.suffix == ".gz":
         cmd += ["--compress", "1"]
     execute(cmd, out.with_suffix(out.suffix + ".log"))
