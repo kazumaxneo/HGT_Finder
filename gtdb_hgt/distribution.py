@@ -117,14 +117,15 @@ def write_distribution_page(folder, name, gene, points, host, config):
 <title>HGT_Finder · Hit distribution</title><style>
 body{font:15px/1.6 system-ui;margin:0;background:#f6f8fa;color:#173140}main{max-width:1450px;margin:auto;padding:24px}button,input{font:inherit;padding:5px}button[aria-pressed=true]{font-weight:bold;border:2px solid #173140}.controls{display:flex;gap:12px;flex-wrap:wrap;margin:16px 0}input[type=number]{width:85px}.scroll{overflow:auto;background:white;border:1px solid #ccd7dd}svg{display:block}table{border-collapse:collapse;background:white;color:black;width:100%;font-size:13px}th,td{border:1px solid black;padding:6px;text-align:left}.muted{color:#536c7b}a{color:#146b98}
 </style></head><body><main><h1>分類群ごとのヒット分布</h1><p>HGT_Finder · ''' + label + '''</p>
-<p id="annotation"></p><p>各点は、有意性・coverage・自己除外条件を通過した各GTDB参照種の最良ヒットです。太い横線は中央値、箱は25–75パーセンタイル、細い線は最小–最大です。HGT確率や転移方向を示す図ではありません。</p>
+<p id="annotation"></p><p>各GTDB参照種の最良ヒットをbit scoreの区間ごとに数えたヒストグラムです。有意性・coverage・自己除外条件を通過したヒットを使います。HGT確率や転移方向を示す図ではありません。</p>
 <div id="rank-controls" class="controls">''' + buttons + '''</div>
 <div class="controls"><label>表示分類群数 <input id="max-taxa" type="number" min="1" value="''' + str(config["max_taxa"]) + '''"></label>
+<label>ビン数 <input id="bins" type="number" min="1" max="200" value="30"></label>
 <label><input id="quality-filter" type="checkbox">品質下限以上のみ（未取得も除外）</label>
 <label>品質下限 <input id="quality-floor" type="number" min="0" max="1" step="0.05" value="''' + str(config["min_hit_quality"]) + '''"></label>
-<button id="apply">表示を更新</button><button id="export">SVG保存</button></div>
+<button id="apply">表示を更新</button><button id="export">SVG保存</button><button id="export-bins">表示中の度数TSV保存</button></div>
 <p id="stats"></p><p id="quality-note" class="muted"></p><div id="diagram" class="scroll"></div>
-<p class="muted">横軸は分類群、縦軸はbit score。宿主群を先頭に固定し、その他は中央値の高い順で表示します。宿主群の有効ヒットがない場合も0種として表示します。点の横方向の位置は重なりを避けるための固定ジッターです。青緑は宿主群、橙は他群、白抜きは低品質または品質未取得。点にカーソルを置くと参照種とヒット情報が見えます。絞り込みはこの図だけに作用し、元のHGTスコア・候補領域を変更しません。</p>
+<p class="muted">横軸はbit score、縦軸はGTDB参照種数です。分類群ごとにパネルを並べ、全パネル・全階級で同じ区間幅と横軸範囲を使います。縦軸の範囲はパネルごとに異なります。区間は下端を含み上端を含まず、最終区間のみ上端も含みます。宿主群を先頭に固定し、その他は中央値の高い順で表示します。青緑は宿主群、橙は他群です。棒にカーソルを置くと区間と種数が見えます。絞り込みはこの図だけに作用し、元のHGTスコア・候補領域を変更しません。</p>
 <h2>表示中の分類群</h2><table><thead><tr><th>分類群</th><th>宿主と同じ</th><th>支持種数</th><th>最小</th><th>25%</th><th>中央値</th><th>75%</th><th>最大</th><th>低品質</th><th>品質未取得</th></tr></thead><tbody id="summary"></tbody></table>
 <p><a href="index.html">ORFの選択に戻る</a> · <a href="''' + name + '''_hits.tsv">全参照種のヒットTSV</a> · <a href="''' + name + '''_summary.tsv">全5階層の集計TSV（品質で絞る前）</a></p>
 </main><script>const payload=''' + encoded + ';\n' + Path(__file__).with_name("distribution.js").read_text() + '\n</script></body></html>'
@@ -161,7 +162,7 @@ def plot_from_run(source, folder, orf_ids=None, rank="genus", max_taxa=12, min_h
         raise ValueError("Host taxonomy must be complete through genus for rank switching")
     reader = SavedHitReader(source, manifest, taxonomy, subject_map)
     entries = []
-    config = dict(rank=rank, max_taxa=max_taxa, min_hit_quality=min_hit_quality)
+    config = dict(rank=rank, max_taxa=max_taxa, min_hit_quality=min_hit_quality, plot_type="histogram", bins=30)
     folder.mkdir(parents=True, exist_ok=True)
     try:
         for i, gene in enumerate(genes, 1):
@@ -179,14 +180,14 @@ def plot_from_run(source, folder, orf_ids=None, rank="genus", max_taxa=12, min_h
                    species_hits=sum(e["species_hits"] for e in entries), entries=entries,
                    source_run_sha256=digest(source / "run.json"), source_scores_sha256=digest(source / "orf_scores.tsv"),
                    source_taxonomy_sha256=reader.taxonomy_hash, search_rerun=False, hgt_scores_recomputed=False,
-                   definition="One species-best filtered hit per GTDB species; all comparison hits shown by default; quality filtering is optional and display-only")
+                   definition="One species-best filtered hit per GTDB species; all comparison hits retained; display groups limited explicitly; quality filtering is optional and display-only")
     dump_json(folder / "distribution.json", summary)
     table = ''.join('<tr>' + ''.join('<td>' + html.escape(str(e[k])) + '</td>' for k in ("orf_id", "gene", "product", "species_hits", "quality_known")) +
                     '<td><a href="' + e["page"] + '">分布を見る</a></td></tr>' for e in entries)
     routes = json.dumps({e["orf_id"]: e["page"] for e in entries}, ensure_ascii=False).replace("<", "\\u003c").replace("&", "\\u0026")
     (folder / "index.html").write_text('''<!doctype html><html lang="ja"><meta charset="utf-8"><title>HGT_Finder · Hit distributions</title>
 <style>body{font:15px/1.6 system-ui;padding:24px}table{border-collapse:collapse;color:black;background:white}td,th{border:1px solid black;padding:8px}input{font:inherit}</style>
-<h1>ORFごとのヒット分布</h1><p>1点＝1 GTDB参照種の最良ヒット。各図で門・綱・目・科・属を切り替えられます。</p>
+<h1>ORFごとのヒット分布</h1><p>各GTDB参照種の最良ヒットを数えたヒストグラム。各図で門・綱・目・科・属を切り替えられます。</p>
 <label>ORF・遺伝子を検索 <input id="filter"></label><p id="message"></p><table><thead><tr><th>ORF</th><th>遺伝子</th><th>注釈</th><th>支持種数</th><th>品質取得済み</th><th>図</th></tr></thead><tbody>''' + table + '''</tbody></table>
 <p><a href="distribution.json">生成条件・出典</a></p><script>const routes=''' + routes + ''';const q=new URLSearchParams(location.search).get('orf');
 if(q&&Object.hasOwnProperty.call(routes,q))location.replace(routes[q]);else if(q)document.getElementById('message').textContent='このORFの分布は生成されていません：'+q;

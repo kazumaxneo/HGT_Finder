@@ -10,4 +10,4 @@ The nif interval is `contig_1:291513–313504` (27 ORFs). The original `candidat
 
 These plots show similarity-hit taxonomy. They do not establish HGT events, donor direction or contamination fractions.
 
-Version 0.1.1 adds species-best distributions in `hit_distributions/` for five selected ORFs (33,388 reference-species hits). ORF IDs in the Sankey and original score report link to these pages. Legacy hits have no stored identity/E-value; their quality is explicitly unavailable, while the Sankey top-hit quality was recovered separately by the original audit.
+Version 0.1.2 uses species-best histograms (bit score on x, reference-species count on y) in `hit_distributions/` for five selected ORFs (33,388 reference-species hits). ORF IDs in the Sankey and original score report link to these pages. Legacy hits have no stored identity/E-value; their quality is explicitly unavailable, while the Sankey top-hit quality was recovered separately by the original audit.

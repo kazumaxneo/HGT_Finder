@@ -1,9 +1,11 @@
 {
-  "created_utc": "2026-10-10T02:36:40.937451+00:00",
+  "created_utc": "2026-10-10T03:33:17.879509+00:00",
   "config": {
     "rank": "genus",
     "max_taxa": 12,
-    "min_hit_quality": 0.5
+    "min_hit_quality": 0.5,
+    "plot_type": "histogram",
+    "bins": 30
   },
   "orfs": 5,
   "species_hits": 33388,
@@ -54,5 +56,5 @@
   "source_taxonomy_sha256": null,
   "search_rerun": false,
   "hgt_scores_recomputed": false,
-  "definition": "One species-best filtered hit per GTDB species; all comparison hits shown by default; quality filtering is optional and display-only"
+  "definition": "One species-best filtered hit per GTDB species; all comparison hits retained; display groups limited explicitly; quality filtering is optional and display-only"
 }
