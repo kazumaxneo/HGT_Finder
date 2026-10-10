@@ -69,7 +69,7 @@ def add_search(p):
     p.add_argument("--diamond", default="diamond")
     p.add_argument("--threads", type=int, default=4)
     p.add_argument("--sensitivity", choices=SENSITIVITY_MODES, default="very-sensitive",
-                   help="DIAMOND search mode; faster/fast favor close matches, default omits mode flags; current default very-sensitive retained pending benchmarks")
+                   help="DIAMOND search mode; very-sensitive is the sensitivity-preserving default; faster/fast favor close matches; default omits mode flags")
     p.add_argument("--max-target-seqs", type=int, default=0, help="0 = no target count cap (default); significance filters still apply")
 
 

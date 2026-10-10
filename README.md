@@ -264,7 +264,7 @@ HGT_Finder run \
 
 ## 検索モードと高速化
 
-`run`／`search`の`--sensitivity`でDIAMONDのモードを指定できます。既定値は従来どおり`very-sensitive`です。`faster`、`fast`、`default`、`mid-sensitive`、`sensitive`、`more-sensitive`、`very-sensitive`、`ultra-sensitive`を選べます。`default`はDIAMONDの感度フラグを省略する指定で、HGT_Finderの既定値とは別です。サーバーのDIAMOND 2.1.9で`faster`と`fast`の存在を確認しました。
+`run`／`search`の`--sensitivity`でDIAMONDのモードを指定できます。感度の維持を優先し、既定値は`very-sensitive`とします。高速モードでは強いヒットも欠落したため、速度だけを理由に既定値を下げません。`sensitive`との一致は下記の小規模パネルで確認しましたが、フルGTDBでの同等性は未検証です。`faster`、`fast`、`default`、`mid-sensitive`、`sensitive`、`more-sensitive`、`very-sensitive`、`ultra-sensitive`を選べます。`default`はDIAMONDの感度フラグを省略する指定で、HGT_Finderの既定値とは別です。サーバーのDIAMOND 2.1.9で`faster`と`fast`の存在を確認しました。
 
 ```sh
 HGT_Finder run \

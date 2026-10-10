@@ -9,6 +9,21 @@ from gtdb_hgt.search import SENSITIVITY_MODES, search
 
 
 class SearchModeTests(unittest.TestCase):
+    def test_omitted_mode_uses_very_sensitive(self):
+        for command, inputs in (
+            ("search", ["--query-faa", "q.faa"]),
+            ("run", ["--genbank", "q.gbk", "--taxonomy", "taxonomy.tsv", "--query-genome", "GCF_000000001.1"]),
+        ):
+            with self.subTest(command=command):
+                args = parser().parse_args([command, *inputs, "--db", "db.dmnd", "--out", "output"])
+                self.assertEqual(args.sensitivity, "very-sensitive")
+        with tempfile.TemporaryDirectory() as d:
+            output = Path(d) / "hits.tsv"
+            with patch("gtdb_hgt.search.execute") as execute:
+                manifest = search(Path("q.faa"), Path("db.dmnd"), output, "diamond", 4)
+            self.assertIn("--very-sensitive", execute.call_args.args[0])
+            self.assertEqual(manifest["sensitivity"], "very-sensitive")
+
     def test_cli_modes_and_command_provenance(self):
         with tempfile.TemporaryDirectory() as d:
             root = Path(d)
