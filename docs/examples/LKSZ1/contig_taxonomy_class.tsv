@@ -1,0 +1,15 @@
+contig	assignment_status	taxon	taxon_label	orf_count	contig_orfs	fraction_of_contig_orfs	candidate_region_orfs
+contig_1	assigned	d__Bacteria;p__Acidobacteriota;c__Blastocatellia	c__Blastocatellia	2	3306	0.0006049606775559589	2
+contig_1	assigned	d__Bacteria;p__Chloroflexota;c__Anaerolineae	c__Anaerolineae	1	3306	0.00030248033877797946	1
+contig_1	assigned	d__Bacteria;p__Cyanobacteriota;c__Cyanobacteriia	c__Cyanobacteriia	2779	3306	0.8405928614640048	476
+contig_1	assigned	d__Bacteria;p__Desulfobacterota;c__Desulfobacteria	c__Desulfobacteria	1	3306	0.00030248033877797946	1
+contig_1	assigned	d__Bacteria;p__Desulfobacterota;c__Syntrophobacteria	c__Syntrophobacteria	1	3306	0.00030248033877797946	0
+contig_1	assigned	d__Bacteria;p__Desulfobacterota_D;c__UBA1144	c__UBA1144	1	3306	0.00030248033877797946	1
+contig_1	assigned	d__Bacteria;p__Patescibacteriota;c__Minisyncoccia	c__Minisyncoccia	3	3306	0.0009074410163339383	1
+contig_1	assigned	d__Bacteria;p__Planctomycetota;c__Planctomycetia	c__Planctomycetia	2	3306	0.0006049606775559589	1
+contig_1	assigned	d__Bacteria;p__Pseudomonadota;c__Alphaproteobacteria	c__Alphaproteobacteria	2	3306	0.0006049606775559589	2
+contig_1	assigned	d__Bacteria;p__Pseudomonadota;c__Gammaproteobacteria	c__Gammaproteobacteria	10	3306	0.0030248033877797943	7
+contig_1	assigned	d__Bacteria;p__UBA10199;c__UBA10199	c__UBA10199	1	3306	0.00030248033877797946	0
+contig_1	insufficient_support		支持種数不足	9	3306	0.0027223230490018148	4
+contig_1	low_hit_quality		低い配列一致：由来判定保留	347	3306	0.10496067755595886	69
+contig_1	no_usable_hit		評価不能：有効ヒットなし	147	3306	0.04446460980036298	36

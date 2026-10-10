@@ -1,0 +1,80 @@
+{
+  "rank_counts": {
+    "phylum": {
+      "status_counts": {
+        "assigned": 2807,
+        "low_hit_quality": 347,
+        "insufficient_support": 5,
+        "no_usable_hit": 147
+      },
+      "host_assigned": 2780,
+      "other_assigned": 27,
+      "near_tie_assigned": 8
+    },
+    "class": {
+      "status_counts": {
+        "assigned": 2803,
+        "low_hit_quality": 347,
+        "insufficient_support": 9,
+        "no_usable_hit": 147
+      },
+      "host_assigned": 2779,
+      "other_assigned": 24,
+      "near_tie_assigned": 8
+    },
+    "order": {
+      "status_counts": {
+        "assigned": 2762,
+        "low_hit_quality": 347,
+        "insufficient_support": 25,
+        "no_usable_hit": 147,
+        "ambiguous": 25
+      },
+      "host_assigned": 2564,
+      "other_assigned": 198,
+      "near_tie_assigned": 106
+    },
+    "family": {
+      "status_counts": {
+        "assigned": 2723,
+        "low_hit_quality": 347,
+        "ambiguous": 38,
+        "insufficient_support": 51,
+        "no_usable_hit": 147
+      },
+      "host_assigned": 2393,
+      "other_assigned": 330,
+      "near_tie_assigned": 166
+    },
+    "genus": {
+      "status_counts": {
+        "assigned": 2448,
+        "low_hit_quality": 347,
+        "ambiguous": 116,
+        "insufficient_support": 248,
+        "no_usable_hit": 147
+      },
+      "host_assigned": 1751,
+      "other_assigned": 697,
+      "near_tie_assigned": 401
+    }
+  },
+  "status_counts": {
+    "assigned": 2448,
+    "low_hit_quality": 347,
+    "ambiguous": 116,
+    "insufficient_support": 248,
+    "no_usable_hit": 147
+  },
+  "host_assigned": 1751,
+  "near_tie_assigned": 401,
+  "ambiguity_counts": {
+    "other_competes": 55,
+    "host_competes": 61
+  },
+  "total_orfs": 3306,
+  "candidate_orfs": 601,
+  "elapsed_seconds": 0.5844804170192219,
+  "hgt_scores_recomputed": false,
+  "min_hit_quality": 0.5
+}

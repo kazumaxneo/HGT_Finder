@@ -1,0 +1,37 @@
+contig	assignment_status	taxon	taxon_label	orf_count	contig_orfs	fraction_of_contig_orfs	candidate_region_orfs
+contig_1	ambiguous		同点：宿主以外の分類群	6	3306	0.0018148820326678765	3
+contig_1	ambiguous		同点：宿主分類群も含む	19	3306	0.005747126436781609	11
+contig_1	assigned	d__Bacteria;p__Acidobacteriota;c__Blastocatellia;o__Pyrinomonadales	o__Pyrinomonadales	2	3306	0.0006049606775559589	2
+contig_1	assigned	d__Bacteria;p__Chloroflexota;c__Anaerolineae;o__Anaerolineales	o__Anaerolineales	1	3306	0.00030248033877797946	1
+contig_1	assigned	d__Bacteria;p__Cyanobacteriota;c__Cyanobacteriia;o__B231	o__B231	2	3306	0.0006049606775559589	0
+contig_1	assigned	d__Bacteria;p__Cyanobacteriota;c__Cyanobacteriia;o__CACIAM-69d	o__CACIAM-69d	1	3306	0.00030248033877797946	0
+contig_1	assigned	d__Bacteria;p__Cyanobacteriota;c__Cyanobacteriia;o__CAKZMO01	o__CAKZMO01	7	3306	0.002117362371445856	6
+contig_1	assigned	d__Bacteria;p__Cyanobacteriota;c__Cyanobacteriia;o__Cyanobacteriales	o__Cyanobacteriales	2564	3306	0.7755595886267392	344
+contig_1	assigned	d__Bacteria;p__Cyanobacteriota;c__Cyanobacteriia;o__Elainellales	o__Elainellales	25	3306	0.007562008469449486	17
+contig_1	assigned	d__Bacteria;p__Cyanobacteriota;c__Cyanobacteriia;o__FACHB-46	o__FACHB-46	1	3306	0.00030248033877797946	1
+contig_1	assigned	d__Bacteria;p__Cyanobacteriota;c__Cyanobacteriia;o__GCF-001939115	o__GCF-001939115	1	3306	0.00030248033877797946	1
+contig_1	assigned	d__Bacteria;p__Cyanobacteriota;c__Cyanobacteriia;o__Gloeomargaritales	o__Gloeomargaritales	1	3306	0.00030248033877797946	1
+contig_1	assigned	d__Bacteria;p__Cyanobacteriota;c__Cyanobacteriia;o__Leptolyngbyales	o__Leptolyngbyales	48	3306	0.014519056261343012	32
+contig_1	assigned	d__Bacteria;p__Cyanobacteriota;c__Cyanobacteriia;o__PCC-6307	o__PCC-6307	1	3306	0.00030248033877797946	1
+contig_1	assigned	d__Bacteria;p__Cyanobacteriota;c__Cyanobacteriia;o__Phormidesmidales	o__Phormidesmidales	37	3306	0.01119177253478524	24
+contig_1	assigned	d__Bacteria;p__Cyanobacteriota;c__Cyanobacteriia;o__Prochlorotrichales	o__Prochlorotrichales	6	3306	0.0018148820326678765	3
+contig_1	assigned	d__Bacteria;p__Cyanobacteriota;c__Cyanobacteriia;o__Pseudanabaenales	o__Pseudanabaenales	27	3306	0.008166969147005444	16
+contig_1	assigned	d__Bacteria;p__Cyanobacteriota;c__Cyanobacteriia;o__RECH01	o__RECH01	2	3306	0.0006049606775559589	0
+contig_1	assigned	d__Bacteria;p__Cyanobacteriota;c__Cyanobacteriia;o__Thermostichales	o__Thermostichales	5	3306	0.0015124016938898972	1
+contig_1	assigned	d__Bacteria;p__Cyanobacteriota;c__Cyanobacteriia;o__Thermosynechococcales	o__Thermosynechococcales	12	3306	0.003629764065335753	5
+contig_1	assigned	d__Bacteria;p__Desulfobacterota;c__Desulfobacteria;o__Desulfobacterales	o__Desulfobacterales	1	3306	0.00030248033877797946	1
+contig_1	assigned	d__Bacteria;p__Desulfobacterota;c__Syntrophobacteria;o__Syntrophobacterales	o__Syntrophobacterales	1	3306	0.00030248033877797946	0
+contig_1	assigned	d__Bacteria;p__Desulfobacterota_D;c__UBA1144;o__Nemesobacterales	o__Nemesobacterales	1	3306	0.00030248033877797946	1
+contig_1	assigned	d__Bacteria;p__Patescibacteriota;c__Minisyncoccia;o__Phycocordibacterales	o__Phycocordibacterales	3	3306	0.0009074410163339383	1
+contig_1	assigned	d__Bacteria;p__Planctomycetota;c__Planctomycetia;o__Gemmatales	o__Gemmatales	1	3306	0.00030248033877797946	1
+contig_1	assigned	d__Bacteria;p__Planctomycetota;c__Planctomycetia;o__Pirellulales	o__Pirellulales	1	3306	0.00030248033877797946	0
+contig_1	assigned	d__Bacteria;p__Pseudomonadota;c__Alphaproteobacteria;o__Dongiales	o__Dongiales	1	3306	0.00030248033877797946	1
+contig_1	assigned	d__Bacteria;p__Pseudomonadota;c__Alphaproteobacteria;o__Rhodobacterales	o__Rhodobacterales	1	3306	0.00030248033877797946	1
+contig_1	assigned	d__Bacteria;p__Pseudomonadota;c__Gammaproteobacteria;o__Burkholderiales	o__Burkholderiales	2	3306	0.0006049606775559589	2
+contig_1	assigned	d__Bacteria;p__Pseudomonadota;c__Gammaproteobacteria;o__Competibacterales	o__Competibacterales	1	3306	0.00030248033877797946	1
+contig_1	assigned	d__Bacteria;p__Pseudomonadota;c__Gammaproteobacteria;o__Methylococcales	o__Methylococcales	2	3306	0.0006049606775559589	0
+contig_1	assigned	d__Bacteria;p__Pseudomonadota;c__Gammaproteobacteria;o__Pseudomonadales	o__Pseudomonadales	3	3306	0.0009074410163339383	2
+contig_1	assigned	d__Bacteria;p__UBA10199;c__UBA10199;o__GCA-002796325	o__GCA-002796325	1	3306	0.00030248033877797946	0
+contig_1	insufficient_support		支持種数不足	25	3306	0.007562008469449486	16
+contig_1	low_hit_quality		低い配列一致：由来判定保留	347	3306	0.10496067755595886	69
+contig_1	no_usable_hit		評価不能：有効ヒットなし	147	3306	0.04446460980036298	36

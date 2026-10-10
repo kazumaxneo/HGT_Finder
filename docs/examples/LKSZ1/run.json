@@ -1,0 +1,74 @@
+{
+  "database_label": "GTDB R232 all representatives",
+  "query_taxonomy": {
+    "domain": "d__Bacteria",
+    "phylum": "p__Cyanobacteriota",
+    "class": "c__Cyanobacteriia",
+    "order": "o__Cyanobacteriales",
+    "family": "f__Microcystaceae",
+    "genus": "g__Synechocystis",
+    "species": "s__Synechocystis sp040436315"
+  },
+  "parameters": {
+    "close_rank": "genus",
+    "donor_rank": "genus",
+    "self_exclude_rank": "species",
+    "min_close_species": 3,
+    "min_donor_species": 2,
+    "min_query_cover": 0.5,
+    "min_subject_cover": 0.5,
+    "evalue": 1e-10,
+    "window": 5,
+    "min_valid": 3,
+    "max_gap_bp": 10000,
+    "threshold": 0.15,
+    "min_region_orfs": 3,
+    "missing_close": "zero"
+  },
+  "score_definition": "(best-supported distal taxon median bit score - close species median bit score) / query self bit score",
+  "candidate_status": "provisional similarity screen; not HGT probability or validated event direction",
+  "counts": {
+    "orfs": 3306,
+    "window_eligible_orfs": 3118,
+    "raw_hits": 681631761,
+    "unknown_taxonomy_hits": 0,
+    "regions": 83
+  },
+  "sankey": {
+    "rank": "genus",
+    "method": "best-hit",
+    "min_species": 2,
+    "margin": 0.01,
+    "max_contigs": 20,
+    "max_taxa": 12,
+    "min_hit_quality": 0.5,
+    "quality_display_only": true,
+    "interpretation": "hit taxonomy view; not HGT probability or contamination fraction",
+    "available_ranks": [
+      "phylum",
+      "class",
+      "order",
+      "family",
+      "genus"
+    ]
+  },
+  "version": "0.1.0",
+  "example": "LKSZ1 / GCF_040436315.1",
+  "source_analysis_date": "2026-10-09",
+  "taxonomy_quality_update_date": "2026-10-10",
+  "reference_database": {
+    "release": "GTDB R232",
+    "representative_genomes": 199923,
+    "proteins": 618638921
+  },
+  "provenance": {
+    "search_rerun": false,
+    "hgt_scores_recomputed": false,
+    "quality_display_only": true,
+    "original_score_files_sha256": {
+      "orf_scores.tsv": "b466af380dbb3493f5ea268e0df4859c3d6545dbcdb6699fa7b7da61808e02f5",
+      "regions.tsv": "2dedbf5f657cea49068556e7fa4ae782e512c7b49ce1cf7794d66db385b327d4"
+    },
+    "interpretation": "Quality threshold applies to taxonomy display only. Original ORF/window scores and candidate regions are retained."
+  }
+}
