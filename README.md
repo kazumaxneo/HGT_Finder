@@ -215,6 +215,16 @@ ORF IDを繰り返して選択できます。全ORFを生成する場合は`--or
 
 ### run／analyzeと同時に生成する
 
+サンキープロットとヒストグラムは独立した追加出力です。どちらか一方、または両方を選べます。ヒストグラムの追加後も、従来のサンキーの出力・分類階級切り替え・絞り込み・SVG保存を維持しています。
+
+| 出したい図 | `run`／`analyze`に追加するオプション |
+|---|---|
+| サンキーのみ | `--sankey` |
+| ヒストグラムのみ（選んだORF） | `--distribution-orf ORF_ID`（複数指定可） |
+| 両方 | `--sankey --distribution-orf ORF_ID` |
+
+全ORFのヒストグラムを出す場合は、`--distribution-orf ORF_ID`の代わりに`--hit-distributions`を使います。保存済みの解析に対しても、`sankey`と`distribution`を個別に実行できます。
+
 `--distribution-orf ORF_ID`を付ければ、指定ORFの分布とレポート／サンキーからのリンクも作成します。複数指定できます。`--hit-distributions`のみを指定すると全ORFを生成します。出力容量はORF数と参照種数に応じて増えるため、必要なORFを選んで生成することもできます。
 
 ```sh
